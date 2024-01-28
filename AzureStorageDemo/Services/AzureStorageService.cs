@@ -28,4 +28,3 @@ public class AzureStorageService(string connectionString) : IAzureStorageService
         return client;
     }
 }
-

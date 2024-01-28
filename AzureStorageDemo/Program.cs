@@ -1,5 +1,6 @@
 using AzureStorageDemo.Interfaces;
 using AzureStorageDemo.Services;
+using AzureStorageDemo.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,8 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IAzureStorageService, AzureStorageService>(x =>
-    new AzureStorageService(builder.Configuration.GetValue<string>("AzureStorage:ConnectionString")!));
+builder.Services.AddScoped<IAzureStorageService, AzureStorageService>(provider =>
+{
+    var connectionString = builder.Configuration.GetValue<string>("AzureStorage:ConnectionString");
+    return new AzureStorageService(connectionString!);
+});
 
 var app = builder.Build();
 
@@ -26,19 +30,12 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", () =>
+app.MapPost("/weatherforecast", async (IAzureStorageService azureStorageService) =>
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
+        await azureStorageService.AddQueueMessageAsync(QueueNames.WeatherForecast, 
+            new WeatherForecast(new DateOnly(2024,1,28), 0, "Cloud with a chance of meatballs."));
     })
-    .WithName("GetWeatherForecast")
+    .WithName("CreateWeatherForecast")
     .WithOpenApi();
 
 app.Run();
