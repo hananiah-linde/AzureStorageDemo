@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using AzureStorageDemo.Interfaces;
 
@@ -12,6 +13,30 @@ public class AzureStorageService(string connectionString) : IAzureStorageService
         var message = JsonSerializer.Serialize(data);
 
         await client.SendMessageAsync(message);
+    }
+
+    public async Task AddQueueMessagesAsync<T>(string queueName, IEnumerable<T> data)
+    {
+        var client = await GetQueueClient(queueName);
+
+        var taskList = new List<Task>();
+        foreach (var item in data)
+        {
+            var message = JsonSerializer.Serialize(item);
+            taskList.Add(client.SendMessageAsync(message));
+        }
+
+        await Task.WhenAll(taskList);
+    }
+
+    public async Task UploadFileAsync()
+    {
+        
+    }
+
+    private BlobClient GetBlobClient()
+    {
+        return new BlobClient(new Uri(""));
     }
 
     private async Task<QueueClient> GetQueueClient(string queueName)

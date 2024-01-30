@@ -25,22 +25,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapPost("/weatherforecast", async (IAzureStorageService azureStorageService) =>
+app.MapPost("/queue", async (IAzureStorageService azureStorageService, object request) =>
     {
-        await azureStorageService.AddQueueMessageAsync(QueueNames.WeatherForecast, 
-            new WeatherForecast(new DateOnly(2024,1,28), 0, "Cloud with a chance of meatballs."));
+        await azureStorageService.AddQueueMessageAsync(QueueNames.WeatherForecast, request);
     })
     .WithName("CreateWeatherForecast")
     .WithOpenApi();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
